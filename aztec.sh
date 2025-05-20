@@ -8,7 +8,7 @@ echo_green() {
 }
 
 # === ตั้งค่าคงที่ ===
-AZTEC_VERSION="alpha-testnet"
+AZTEC_VERSION="0.85.0-alpha-testnet.11"
 ENV_FILE="/root/aztec-prover/.env"
 
 # === อัปเดตระบบ และติดตั้งทุกอย่างก่อน ===
