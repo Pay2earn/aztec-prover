@@ -8,7 +8,7 @@ echo_green() {
 }
 
 # === ตั้งค่าคงที่ ===
-AZTEC_VERSION="0.85.0-alpha-testnet.11"
+AZTEC_VERSION="0.87.0"
 ENV_FILE="/root/aztec-prover/.env"
 
 # === อัปเดตระบบ และติดตั้งทุกอย่างก่อน ===
@@ -67,13 +67,13 @@ set -o allexport
 source "$ENV_FILE"
 set +o allexport
 
-# === สร้าง docker-compose.yaml ===
+# === สร้าง docker-compose.yaml โดยฝังเวอร์ชันตรง ๆ ===
 echo_green ">> Creating docker-compose.yaml..."
 
 cat <<EOF > docker-compose.yaml
 services:
   prover-node:
-    image: aztecprotocol/aztec:\${AZTEC_VERSION}
+    image: aztecprotocol/aztec:$AZTEC_VERSION
     command:
       - node
       - --no-warnings
@@ -111,7 +111,7 @@ services:
       - .env
 
   agent:
-    image: aztecprotocol/aztec:\${AZTEC_VERSION}
+    image: aztecprotocol/aztec:$AZTEC_VERSION
     command:
       - node
       - --no-warnings
@@ -131,7 +131,7 @@ services:
     restart: unless-stopped
 
   broker:
-    image: aztecprotocol/aztec:\${AZTEC_VERSION}
+    image: aztecprotocol/aztec:$AZTEC_VERSION
     command:
       - node
       - --no-warnings
@@ -150,9 +150,9 @@ services:
       - .env
 EOF
 
-# === เริ่มระบบใน screen ===
+# === เริ่มระบบใน background ===
 echo_green "✅ Done. 🚀 Starting Aztec Prover Node..."
 docker-compose up -d
 
-echo -e "\n✅ ${BOLD}Installation and startup completed!${RESET}"
+echo -e "\n✅ \033[1mInstallation and startup completed!\033[0m"
 echo "   - Check logs: docker-compose logs -f"
