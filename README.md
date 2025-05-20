@@ -2,8 +2,8 @@
 
 * Clone repo
 ```bash
-git clone https://github.com/Pay2earn/Aztec-Prover-Node.git
-cd Aztec-Prover-Node
+git clone https://github.com/Pay2earn/aztec-prover.git
+cd aztec-prover
 ```
 * Give permission to run the script
 ```bash
