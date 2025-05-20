@@ -8,7 +8,7 @@ echo_green() {
 }
 
 # === ตั้งค่าคงที่ ===
-AZTEC_VERSION="0.87.0-amd64"
+AZTEC_VERSION="0.87.0"
 ENV_FILE="/root/aztec-prover/.env"
 
 # === อัปเดตระบบ และติดตั้งทุกอย่างก่อน ===
