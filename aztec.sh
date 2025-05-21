@@ -7,9 +7,9 @@ echo_green() {
     echo -e "${GREEN_TEXT}$1${RESET_TEXT}"
 }
 
-# === ตั้งค่าคงที่ ===
-AZTEC_VERSION="0.87.0-amd64"
+# === ค่าคงที่ ===
 ENV_FILE="/root/aztec-prover/.env"
+IMAGE_TAG="aztecprotocol/aztec:0.85.0-alpha-testnet.11"
 
 # === อัปเดตระบบ และติดตั้งทุกอย่างก่อน ===
 echo_green ">> [1/5] Updating system..."
@@ -36,10 +36,10 @@ chmod 777 -R /root/aztec-prover
 cd /root/aztec-prover
 
 # === ดึง Docker image ล่วงหน้า ===
-echo_green ">> [5/5] Pulling latest Aztec Docker image v$AZTEC_VERSION..."
-docker pull aztecprotocol/aztec:$AZTEC_VERSION
+echo_green ">> [5/5] Pulling Docker image $IMAGE_TAG..."
+docker pull $IMAGE_TAG
 
-# === เริ่ม aztec testnet (ถ้า CLI ใช้ start ได้อัตโนมัติ) ===
+# === เริ่ม aztec testnet ===
 aztec-up alpha-testnet
 
 # === สร้างหรือโหลด .env ===
@@ -58,7 +58,6 @@ SEPOLIA_RPC=$SEPOLIA_RPC
 BEACON_RPC=$BEACON_RPC
 PRIVATE_KEY=$PRIVATE_KEY
 WALLET_ADDRESS=$WALLET_ADDRESS
-AZTEC_VERSION=$AZTEC_VERSION
 EOF
 fi
 
@@ -67,13 +66,13 @@ set -o allexport
 source "$ENV_FILE"
 set +o allexport
 
-# === สร้าง docker-compose.yaml โดยฝังเวอร์ชันตรง ๆ ===
+# === สร้าง docker-compose.yaml ===
 echo_green ">> Creating docker-compose.yaml..."
 
 cat <<EOF > docker-compose.yaml
 services:
   prover-node:
-    image: aztecprotocol/aztec:$AZTEC_VERSION
+    image: $IMAGE_TAG
     command:
       - node
       - --no-warnings
@@ -111,7 +110,7 @@ services:
       - .env
 
   agent:
-    image: aztecprotocol/aztec:$AZTEC_VERSION
+    image: $IMAGE_TAG
     command:
       - node
       - --no-warnings
@@ -131,7 +130,7 @@ services:
     restart: unless-stopped
 
   broker:
-    image: aztecprotocol/aztec:$AZTEC_VERSION
+    image: $IMAGE_TAG
     command:
       - node
       - --no-warnings
@@ -150,7 +149,7 @@ services:
       - .env
 EOF
 
-# === เริ่มระบบใน background ===
+# === เริ่มระบบ ===
 echo_green "✅ Done. 🚀 Starting Aztec Prover Node..."
 docker-compose up -d
 
