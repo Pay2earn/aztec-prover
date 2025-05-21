@@ -1,4 +1,4 @@
-# Aztec Sequencer Setup - Alpha Testnet
+# Aztec Prover Node Setup - Alpha Testnet
 
 This repository contains an automated script for setting up and running an Aztec Prover node on the Alpha Testnet.  
 The script streamlines the installation process, making it accessible for both newcomers and experienced blockchain developers.
