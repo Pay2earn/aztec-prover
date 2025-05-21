@@ -12,23 +12,25 @@ ENV_FILE="/root/aztec-prover/.env"
 IMAGE_TAG="aztecprotocol/aztec:0.85.0-alpha-testnet.11"
 
 # === อัปเดตระบบ และติดตั้งทุกอย่างก่อน ===
-echo_green ">> [1/5] Updating system..."
+echo_green ">> [1/6] Updating system..."
 sudo apt-get update && sudo apt-get upgrade -y
 
-echo_green ">> [2/5] Installing dependencies..."
+echo_green ">> [2/6] Installing dependencies..."
 sudo apt install -y curl iptables build-essential git wget lz4 jq make gcc nano \
     automake autoconf tmux htop nvme-cli libgbm1 pkg-config libssl-dev \
     libleveldb-dev tar clang bsdmainutils ncdu unzip python3 python3-pip \
-    python3-venv python3-dev docker-compose
+    python3-venv python3-dev docker-ce docker-ce-cli containerd.io docker-buildx-plugin
 
-echo_green ">> [3/5] Installing Docker..."
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+echo_green ">> [3/6] Installing Docker Compose (v2)..."
+sudo apt remove -y docker-compose || true
+sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose version
 
-echo_green ">> [4/5] Installing Aztec CLI..."
+echo_green ">> [4/6] Installing Aztec CLI..."
 yes | bash <(curl -sL https://install.aztec.network)
 export PATH=$PATH:/root/.aztec/bin
 echo 'export PATH=$PATH:/root/.aztec/bin' >> ~/.bashrc
-source ~/.bashrc
 
 # === เตรียม Directory และ Screen ===
 mkdir -p /root/aztec-prover/node
@@ -36,14 +38,14 @@ chmod 777 -R /root/aztec-prover
 cd /root/aztec-prover
 
 # === ดึง Docker image ล่วงหน้า ===
-echo_green ">> [5/5] Pulling Docker image $IMAGE_TAG..."
+echo_green ">> [5/6] Pulling Docker image $IMAGE_TAG..."
 docker pull $IMAGE_TAG
 
 # === เริ่ม aztec testnet ===
 aztec-up alpha-testnet
 
 # === สร้างหรือโหลด .env ===
-echo_green ">> Setting up environment..."
+echo_green ">> [6/6] Setting up environment..."
 
 if [ ! -f "$ENV_FILE" ]; then
     echo_green ">> Creating .env..."
@@ -66,7 +68,7 @@ set -o allexport
 source "$ENV_FILE"
 set +o allexport
 
-# === สร้าง docker-compose.yaml ===
+# === สร้าง docker-compose.yaml โดยไม่ใส่ version ===
 echo_green ">> Creating docker-compose.yaml..."
 
 cat <<EOF > docker-compose.yaml
@@ -124,9 +126,10 @@ services:
       PROVER_AGENT_POLL_INTERVAL_MS: "7000"
       PROVER_BROKER_HOST: http://broker:8080
       PROVER_ID: "\${WALLET_ADDRESS}"
+    volumes:
+      - /root/aztec-prover/node:/data
     env_file:
       - .env
-    pull_policy: always
     restart: unless-stopped
 
   broker:
