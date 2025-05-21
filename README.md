@@ -1,3 +1,41 @@
+# Aztec Sequencer Setup - Alpha Testnet
+
+This repository contains an automated script for setting up and running an Aztec Prover node on the Alpha Testnet.  
+The script streamlines the installation process, making it accessible for both newcomers and experienced blockchain developers.
+
+---
+
+## 📦 Features
+
+- ✅ Install Docker and Docker Compose (if not already installed)
+- ✅ Install Aztec CLI
+- ✅ Configure the Aztec Alpha Testnet environment
+- ✅ Prompt for RPC URLs and validator private key
+- ✅ Automatically start the Aztec Prover node using Docker
+
+---
+
+## 🖥️ Requirements
+
+- Ubuntu/Debian-based Linux OS
+- Root or sudo privileges
+- Internet connection
+- L1 Execution Client (EL) RPC URL
+- L1 Consensus Client (CL) RPC URL
+- Validator Private Key
+- *(Optional)* Blob Sink URL
+- Ensure your server meets the recommended specs:
+
+  CPU: ≥ 32 cores
+
+  RAM: ≥ 128 GB
+
+  Disk: ≥ 100 GB
+
+  Upload speed: ≥ 25 Mbps
+
+---
+
 ## ⚡ Quick Start
 
 * Clone repo
