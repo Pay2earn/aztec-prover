@@ -122,7 +122,7 @@ services:
       - --network
       - alpha-testnet
     environment:
-      PROVER_AGENT_COUNT: "20"
+      PROVER_AGENT_COUNT: "30"
       PROVER_AGENT_POLL_INTERVAL_MS: "7000"
       PROVER_BROKER_HOST: http://broker:8080
       PROVER_ID: "\${WALLET_ADDRESS}"
