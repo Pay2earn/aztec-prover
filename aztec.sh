@@ -68,17 +68,15 @@ set -o allexport
 source "$ENV_FILE"
 set +o allexport
 
-# === สร้าง docker-compose.yaml โดยไม่ใส่ version ===
+# === สร้าง docker-compose.yaml โดยใช้ entrypoint ===
 echo_green ">> Creating docker-compose.yaml..."
 
 cat <<EOF > docker-compose.yaml
 services:
   prover-node:
     image: $IMAGE_TAG
-    command: [
-      "node", "--no-warnings", "/usr/src/yarn-project/aztec/dest/bin/index.js",
-      "start", "--prover-node", "--archiver", "--network", "alpha-testnet"
-    ]
+    entrypoint: >
+      sh -c 'node --no-warnings /usr/src/yarn-project/aztec/dest/bin/index.js start --prover-node --archiver --network alpha-testnet'
     depends_on:
       broker:
         condition: service_started
@@ -109,10 +107,8 @@ services:
 
   agent:
     image: $IMAGE_TAG
-    command: [
-      "node", "--no-warnings", "/usr/src/yarn-project/aztec/dest/bin/index.js",
-      "start", "--prover-agent", "--network", "alpha-testnet"
-    ]
+    entrypoint: >
+      sh -c 'node --no-warnings /usr/src/yarn-project/aztec/dest/bin/index.js start --prover-agent --network alpha-testnet'
     environment:
       PROVER_AGENT_COUNT: "32"
       PROVER_AGENT_POLL_INTERVAL_MS: "7000"
@@ -126,10 +122,8 @@ services:
 
   broker:
     image: $IMAGE_TAG
-    command: [
-      "node", "--no-warnings", "/usr/src/yarn-project/aztec/dest/bin/index.js",
-      "start", "--prover-broker", "--network", "alpha-testnet"
-    ]
+    entrypoint: >
+      sh -c 'node --no-warnings /usr/src/yarn-project/aztec/dest/bin/index.js start --prover-broker --network alpha-testnet'
     environment:
       DATA_DIRECTORY: /data
       ETHEREUM_HOSTS: "\${SEPOLIA_RPC}"
