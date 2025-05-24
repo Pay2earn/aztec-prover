@@ -9,7 +9,7 @@ echo_green() {
 
 # === ค่าคงที่ ===
 ENV_FILE="/root/aztec-prover/.env"
-IMAGE_TAG="aztecprotocol/aztec:0.85.0-alpha-testnet.11"
+IMAGE_TAG="aztecprotocol/aztec:alpha-testnet"
 
 # === อัปเดตระบบ และติดตั้งทุกอย่างก่อน ===
 echo_green ">> [1/6] Updating system..."
