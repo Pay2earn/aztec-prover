@@ -75,15 +75,10 @@ cat <<EOF > docker-compose.yaml
 services:
   prover-node:
     image: $IMAGE_TAG
-    command:
-      - node
-      - --no-warnings
-      - /usr/src/yarn-project/aztec/dest/bin/index.js
-      - start 
-      - --prover-node
-      - --archiver
-      - --network
-      - alpha-testnet
+    command: [
+      "node", "--no-warnings", "/usr/src/yarn-project/aztec/dest/bin/index.js",
+      "start", "--prover-node", "--archiver", "--network", "alpha-testnet"
+    ]
     depends_on:
       broker:
         condition: service_started
@@ -110,19 +105,16 @@ services:
       - /root/aztec-prover/node:/data
     env_file:
       - .env
+    restart: unless-stopped
 
   agent:
     image: $IMAGE_TAG
-    command:
-      - node
-      - --no-warnings
-      - /usr/src/yarn-project/aztec/dest/bin/index.js
-      - start
-      - --prover-agent
-      - --network
-      - alpha-testnet
+    command: [
+      "node", "--no-warnings", "/usr/src/yarn-project/aztec/dest/bin/index.js",
+      "start", "--prover-agent", "--network", "alpha-testnet"
+    ]
     environment:
-      PROVER_AGENT_COUNT: "30"
+      PROVER_AGENT_COUNT: "32"
       PROVER_AGENT_POLL_INTERVAL_MS: "7000"
       PROVER_BROKER_HOST: http://broker:8080
       PROVER_ID: "\${WALLET_ADDRESS}"
@@ -134,14 +126,10 @@ services:
 
   broker:
     image: $IMAGE_TAG
-    command:
-      - node
-      - --no-warnings
-      - /usr/src/yarn-project/aztec/dest/bin/index.js
-      - start
-      - --prover-broker
-      - --network
-      - alpha-testnet
+    command: [
+      "node", "--no-warnings", "/usr/src/yarn-project/aztec/dest/bin/index.js",
+      "start", "--prover-broker", "--network", "alpha-testnet"
+    ]
     environment:
       DATA_DIRECTORY: /data
       ETHEREUM_HOSTS: "\${SEPOLIA_RPC}"
@@ -150,6 +138,7 @@ services:
       - /root/aztec-prover/node:/data
     env_file:
       - .env
+    restart: unless-stopped
 EOF
 
 # === เริ่มระบบ ===
