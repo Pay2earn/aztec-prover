@@ -9,7 +9,7 @@ echo_green() {
 
 # === ค่าคงที่ ===
 ENV_FILE="/root/aztec-prover/.env"
-IMAGE_TAG="aztecprotocol/aztec:alpha-testnet"
+IMAGE_TAG="aztecprotocol/aztec:0.87.7"
 
 # === อัปเดตระบบ และติดตั้งทุกอย่างก่อน ===
 echo_green ">> [1/6] Updating system..."
@@ -110,8 +110,8 @@ services:
     entrypoint: >
       sh -c 'node --no-warnings /usr/src/yarn-project/aztec/dest/bin/index.js start --prover-agent --network alpha-testnet'
     environment:
-      PROVER_AGENT_COUNT: "32"
-      PROVER_AGENT_POLL_INTERVAL_MS: "7000"
+      PROVER_AGENT_COUNT: "16"
+      PROVER_AGENT_POLL_INTERVAL_MS: "5000"
       PROVER_BROKER_HOST: http://broker:8080
       PROVER_ID: "\${WALLET_ADDRESS}"
     volumes:
