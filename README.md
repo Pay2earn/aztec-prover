@@ -1,5 +1,5 @@
 ```bash
-https://github.com/Pay2earn/aztec-prover.git
+git clone https://github.com/Pay2earn/aztec-prover.git
 cd /root/aztec-prover
 ```
 
