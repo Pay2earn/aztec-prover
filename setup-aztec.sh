@@ -11,29 +11,48 @@ sudo apt-get install -y \
   curl iptables build-essential git wget lz4 jq make gcc nano \
   automake autoconf tmux htop nvme-cli libgbm1 pkg-config \
   libssl-dev libleveldb-dev tar clang bsdmainutils ncdu unzip \
-  docker-compose libleveldb-dev acl
+  apt-transport-https ca-certificates gnupg lsb-release software-properties-common acl
 
-echo "[3/8] Installing Docker..."
+echo "[3/8] Installing Docker (compatible with all Ubuntu versions)..."
+
+# Add Docker GPG key and repo if not already added
+if ! grep -q "download.docker.com" /etc/apt/sources.list.d/docker.list 2>/dev/null; then
+  sudo install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+    gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+  echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+    https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+fi
+
+# Update again to include Docker repo
+sudo apt-get update -y
+
+# Install Docker packages
 sudo apt-get install -y \
   docker-ce docker-ce-cli containerd.io \
   docker-buildx-plugin docker-compose-plugin
+
+# Enable and start Docker
+sudo systemctl enable docker
+sudo systemctl restart docker
 
 echo "[4/8] Installing Aztec CLI (non-interactive)..."
 curl -sL https://install.aztec.network | bash
 
 echo "[5/8] Adding Aztec to PATH (if not already)..."
-# ใช้ grep แบบปลอดภัย ไม่ใช้ range
 if ! grep -Fq '/root/.aztec/bin' ~/.bashrc; then
   echo 'export PATH=$PATH:/root/.aztec/bin' >> ~/.bashrc
 fi
 
-# ป้องกัน shell non-interactive ใน .bashrc
 if ! grep -Fq 'if [[ $- != *i* ]]' ~/.bashrc; then
   sed -i '1i\
 if [[ $- != *i* ]]; then\n  return\nfi\n' ~/.bashrc
 fi
 
-# โหลด PATH ใน shell ปัจจุบันโดยตรง
 export PATH="$PATH:/root/.aztec/bin"
 
 echo "[6/8] Bootstrapping Aztec alpha-testnet..."
