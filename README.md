@@ -28,6 +28,10 @@ docker compose logs -f
 ```
 
 ```bash
+rm -rf docker-compose.yaml
+```
+
+```bash
 docker ps -a
 ```
 
