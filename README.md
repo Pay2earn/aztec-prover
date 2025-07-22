@@ -5,7 +5,7 @@ cd /root/aztec-prover
 
 ```bash
 chmod +x setup-aztec.sh
-chmod +x prove 
+chmod +x prove
 ```
 
 ```bash
@@ -25,7 +25,7 @@ docker compose up -d
 ```
 
 ```bash
-docker compose logs -f 
+docker compose logs -f
 ```
 
 ```bash
