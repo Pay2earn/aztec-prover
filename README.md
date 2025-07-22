@@ -32,5 +32,5 @@ docker ps -a
 ```
 
 ```bash
-docker compose down -v --remove-orphans && sudo rm -rf /root/aztec-prover/node{1,2,3,4} && sudo rm -f /root/aztec-prover/.env
+docker compose down -v --remove-orphans && sudo rm -rf /root/aztec-prover/node{1,2,3,4,5,6,7,8} && sudo rm -f /root/aztec-prover/.env
 ```
