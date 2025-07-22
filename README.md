@@ -5,7 +5,7 @@ cd /root/aztec-prover
 
 ```bash
 chmod +x setup-aztec.sh
-chmod +x prove
+chmod +x prove 
 ```
 
 ```bash
