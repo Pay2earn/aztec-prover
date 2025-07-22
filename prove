@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+SERVICES=(
+  "aztec-prover-prover-node-1-1"
+  "aztec-prover-prover-node-2-1"
+  "aztec-prover-prover-node-3-1"
+  "aztec-prover-prover-node-4-1"
+  "aztec-prover-prover-node-5-1"
+  "aztec-prover-prover-node-6-1"
+  "aztec-prover-prover-node-7-1"
+  "aztec-prover-prover-node-8-1"
+)
+
+printf "%-10s | %-10s | %-10s | %-8s | %-25s\n" "Epoch" "TotalTime" "LastJobTime" "Status" "Container"
+printf "%-10s-+-%-10s-+-%-10s-+-%-8s-+-%-25s\n" "----------" "----------" "----------" "--------" "-------------------------"
+
+to_sec() { IFS=: read h m s <<< "$1"; echo $((10#$h*3600 + 10#$m*60 + 10#$s)); }
+fmt_dur() { local d=$1; printf "%02d:%02d" $((d/60)) $((d%60)); }
+
+# ใช้ associative array เก็บ state แยกตาม container
+declare -A pending_epoch
+declare -A pending_total_start_sec
+declare -A pending_lastjob_start_sec
+declare -A pending_end_time_sec
+declare -A waiting_for_total_start
+declare -A waiting_for_lastjob_start
+
+print_epoch() {
+    local svc=$1
+    local epoch=${pending_epoch[$svc]}
+    local total_start=${pending_total_start_sec[$svc]}
+    local lastjob_start=${pending_lastjob_start_sec[$svc]}
+    local end_time=${pending_end_time_sec[$svc]}
+    local ttime="--:--"
+    local ltime="--:--"
+
+    if [[ $total_start && $end_time ]]; then
+        local delta=$((end_time - total_start))
+        (( delta < 0 )) && delta=$((86400 + delta))
+        ttime=$(fmt_dur $delta)
+    fi
+    if [[ $lastjob_start && $end_time ]]; then
+        local delta=$((end_time - lastjob_start))
+        (( delta < 0 )) && delta=$((86400 + delta))
+        ltime=$(fmt_dur $delta)
+    fi
+    printf "%-10s | %-10s | %-10s | %-8s | %-25s\n" "$epoch" "$ttime" "$ltime" "$2" "$svc"
+    
+    unset pending_epoch[$svc]
+    unset pending_total_start_sec[$svc]
+    unset pending_lastjob_start_sec[$svc]
+    unset pending_end_time_sec[$svc]
+    waiting_for_total_start[$svc]=1
+    waiting_for_lastjob_start[$svc]=1
+}
+
+for SERVICE in "${SERVICES[@]}"; do
+    docker logs -f "$SERVICE" 2>&1 | \
+    grep --line-buffered -E 'Starting epoch [0-9]+ proving job|Check for job completion|num outstanding jobs: 1[, ]|Submitted proof for epoch' | \
+    while read -r line; do
+        [[ $line =~ \[([0-9]{2}):([0-9]{2}):([0-9]{2}) ]] && ts="${BASH_REMATCH[1]}:${BASH_REMATCH[2]}:${BASH_REMATCH[3]}"
+        
+        if [[ $line =~ Starting\ epoch\ ([0-9]+)\ proving\ job ]]; then
+            [[ ${pending_epoch[$SERVICE]+_} ]] && print_epoch "$SERVICE" "FAILED"
+            pending_epoch[$SERVICE]="${BASH_REMATCH[1]}"
+            unset pending_total_start_sec[$SERVICE]
+            unset pending_lastjob_start_sec[$SERVICE]
+            unset pending_end_time_sec[$SERVICE]
+            waiting_for_total_start[$SERVICE]=1
+            waiting_for_lastjob_start[$SERVICE]=1
+        elif [[ $line =~ Check\ for\ job\ completion ]] && [[ ${waiting_for_total_start[$SERVICE]} -eq 1 ]]; then
+            pending_total_start_sec[$SERVICE]=$(to_sec "$ts")
+            waiting_for_total_start[$SERVICE]=0
+        elif [[ $line =~ num\ outstanding\ jobs:\ 1([ ,]|$) ]] && [[ ${waiting_for_lastjob_start[$SERVICE]} -eq 1 ]]; then
+            pending_lastjob_start_sec[$SERVICE]=$(to_sec "$ts")
+            waiting_for_lastjob_start[$SERVICE]=0
+        elif [[ $line =~ Submitted\ proof\ for\ epoch\ ([0-9]+) ]] && [[ ${pending_epoch[$SERVICE]} == "${BASH_REMATCH[1]}" ]]; then
+            pending_end_time_sec[$SERVICE]=$(to_sec "$ts")
+            print_epoch "$SERVICE" "OK"
+        fi
+    done &
+done
+
+wait
