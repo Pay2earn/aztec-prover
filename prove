@@ -95,8 +95,15 @@ for SERVICE in "${SERVICES[@]}"; do
                 continue
             fi
 
+            # ✅ ถ้ายังมี epoch ค้างจากก่อนหน้า ให้ถือว่า FAILED
+            if [[ ${pending_epoch[$SERVICE]+_} ]]; then
+                if [[ -n "$ts" ]]; then
+                    pending_end_time_sec[$SERVICE]=$(to_sec "$ts")
+                fi
+                print_epoch "$SERVICE" "FAILED"
+            fi
+
             enqueue_epoch "$SERVICE" "$epoch"
-            [[ ${pending_epoch[$SERVICE]+_} ]] && print_epoch "$SERVICE" "FAILED"
             pending_epoch[$SERVICE]="$epoch"
             unset pending_total_start_sec[$SERVICE]
             unset pending_lastjob_start_sec[$SERVICE]
