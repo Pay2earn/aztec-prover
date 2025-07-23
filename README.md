@@ -18,6 +18,10 @@ nano docker-compose.yaml
 ```
 
 ```bash
+setup-zram.sh
+```
+
+```bash
 sudo ./setup-aztec.sh
 ```
 
