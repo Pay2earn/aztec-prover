@@ -8,7 +8,7 @@ sudo apt install -y zram-tools
 echo "⚙️ Configuring zram..."
 sudo tee /etc/default/zramswap > /dev/null <<EOF
 ALGO=zstd
-PERCENT=50
+PERCENT=100
 PRIORITY=32767
 EOF
 
