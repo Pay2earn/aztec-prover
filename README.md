@@ -5,6 +5,7 @@ cd /root/aztec-prover
 
 ```bash
 chmod +x setup-aztec.sh
+chmod +x setup-zram.sh
 chmod +x prove
 ```
 
