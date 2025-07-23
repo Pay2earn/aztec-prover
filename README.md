@@ -18,7 +18,7 @@ nano docker-compose.yaml
 ```
 
 ```bash
-setup-zram.sh
+sudo ./setup-zram.sh
 ```
 
 ```bash
