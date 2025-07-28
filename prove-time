@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-TELEGRAM_TOKEN="8369082274:AAG0M7VtdXaY_uhncRaBFsuu-ftn4HZMujE"
-TELEGRAM_CHAT_ID="-1002874821432"
+TELEGRAM_TOKEN="ABC"
+TELEGRAM_CHAT_ID="ABC"
 
 SERVICES=(
   "aztec-prover-prover-node-1-1"
