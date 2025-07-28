@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+
+TELEGRAM_TOKEN="8369082274:AAG0M7VtdXaY_uhncRaBFsuu-ftn4HZMujE"
+TELEGRAM_CHAT_ID="-1002874821432"
+
+SERVICES=(
+  "aztec-prover-prover-node-1-1"
+  "aztec-prover-prover-node-2-1"
+  "aztec-prover-prover-node-3-1"
+  "aztec-prover-prover-node-4-1"
+  "aztec-prover-prover-node-5-1"
+  "aztec-prover-prover-node-6-1"
+  "aztec-prover-prover-node-7-1"
+  "aztec-prover-prover-node-8-1"
+)
+
+declare -A pids
+
+trap 'echo "Stopping..."; kill "${pids[@]}" 2>/dev/null; exit' SIGINT
+
+to_sec() { IFS=: read -r h m s <<< "$1"; echo $((10#$h*3600 + 10#$m*60 + 10#$s)); }
+fmt_dur() { local d=$1; printf "%02d:%02d mins" $((d/60)) $((d%60)); }
+
+to_local_utc7() {
+  IFS=: read -r h m s <<< "$1"
+  h=$((10#$h + 7))
+  (( h >= 24 )) && h=$((h - 24))
+  printf "%02d:%02d:%02d" "$h" "$m" "$s"
+}
+
+to_ampm() {
+  local t=$(to_local_utc7 "$1")
+  IFS=: read -r h m s <<< "$t"
+  apm="am"; (( h >= 12 )) && apm="pm"
+  h=$(( h % 12 )); (( h == 0 )) && h=12
+  printf "%02d:%02d:%02d %s" "$h" "$m" "$s" "$apm"
+}
+
+send_telegram() {
+  local epoch=$1 stat=$2 t=$3 start_ts=$4 submit_ts=$5 l=$6 svc=$7
+  local icon="❔"
+  [[ $stat == "OK" ]] && icon="✅"
+  [[ $stat == "FAILED" ]] && icon="❌"
+  [[ $stat == "MISSING" ]] && icon="⚠️"
+  local header="$icon EPOCH <b>$epoch</b> <b>$stat</b> [$svc]"
+  local body="<pre>Total Time:  $t
+Start Time:  $start_ts (UTC+7)
+Submit Time: $submit_ts (UTC+7)
+Last Job:    $l</pre>"
+
+  curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
+    -d chat_id="$TELEGRAM_CHAT_ID" \
+    -d parse_mode="HTML" \
+    --data-urlencode "text=$header"$'\n'"$body" > /dev/null
+}
+
+print_epoch() {
+  local svc=$1 epoch=$2 stat=$3 start_ts=$4 submit_ts=$5 lastjob_ts=$6
+  local icon="❔"
+  [[ $stat == "OK" ]] && icon="✅"
+  [[ $stat == "FAILED" ]] && icon="❌"
+  [[ $stat == "MISSING" ]] && icon="⚠️"
+
+  local ttime="--:--"; ltime="--:--"
+  if [[ $start_ts =~ ^[0-9]{2}:[0-9]{2}:[0-9]{2}$ && $submit_ts =~ ^[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]; then
+    d=$(( ( $(to_sec "$submit_ts") - $(to_sec "$start_ts") + 86400 ) % 86400 ))
+    ttime=$(fmt_dur $d)
+  fi
+  if [[ $lastjob_ts =~ ^[0-9]{2}:[0-9]{2}:[0-9]{2}$ && $submit_ts =~ ^[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]; then
+    d=$(( ( $(to_sec "$submit_ts") - $(to_sec "$lastjob_ts") + 86400 ) % 86400 ))
+    ltime=$(fmt_dur $d)
+  fi
+
+  echo "$icon EPOCH $epoch   $stat   [$svc]"
+  echo "    Total Time:  $ttime"
+  echo "    Start Time:  $(to_ampm "$start_ts")"
+  echo "    Submit Time: $(to_ampm "$submit_ts")"
+  echo "    Last Job:    $ltime"
+  echo
+  send_telegram "$epoch" "$stat" "$ttime" "$(to_ampm "$start_ts")" "$(to_ampm "$submit_ts")" "$ltime" "$svc"
+}
+
+for SERVICE in "${SERVICES[@]}"; do
+  (
+    echo "[⚙️ Monitoring] $(date +%H:%M:%S) - $SERVICE"
+    declare -A starts submits lastjobs printed
+    docker logs -fn 200000 "$SERVICE" 2>&1 | grep --line-buffered -E 'Starting epoch|Submitted proof|num outstanding jobs: 1[, ]' | \
+    while read -r line; do
+      [[ $line =~ \[([0-9]{2}):([0-9]{2}):([0-9]{2}) ]] || continue
+      ts="${BASH_REMATCH[1]}:${BASH_REMATCH[2]}:${BASH_REMATCH[3]}"
+      if [[ $line =~ Starting\ epoch\ ([0-9]+) ]]; then
+        epoch=${BASH_REMATCH[1]}
+        starts[$epoch]="$ts"
+        prev=$((epoch-1))
+        if [[ -n "${starts[$prev]}" && -z "${submits[$prev]}" && -z "${printed[$prev]}" ]]; then
+          submits[$prev]="$ts"
+          print_epoch "$SERVICE" "$prev" "FAILED" "${starts[$prev]}" "$ts" "${lastjobs[$prev]:--:--}"
+          printed[$prev]=1
+        fi
+      elif [[ $line =~ Submitted\ proof\ for\ epoch\ ([0-9]+) ]]; then
+        epoch=${BASH_REMATCH[1]}
+        submits[$epoch]="$ts"
+        if [[ -n "${starts[$epoch]}" && -z "${printed[$epoch]}" ]]; then
+          print_epoch "$SERVICE" "$epoch" "OK" "${starts[$epoch]}" "$ts" "${lastjobs[$epoch]:--:--}"
+          printed[$epoch]=1
+        fi
+      elif [[ $line =~ num\ outstanding\ jobs:\ 1([ ,]|$) ]]; then
+        for k in "${!starts[@]}"; do
+          if [[ -z "${lastjobs[$k]}" && -z "${submits[$k]}" ]]; then
+            lastjobs[$k]="$ts"
+          fi
+        done
+      fi
+    done
+  ) &
+  pids["$SERVICE"]=$!
+done
+
+wait
